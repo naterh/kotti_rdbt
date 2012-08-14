@@ -1,5 +1,6 @@
 from kotti.resources import Content
 from kotti.resources import File
+from kotti.resources import IDefaultWorkflow
 from kotti.util import JsonType
 from kotti_rdbt import _
 from sqlalchemy import Boolean
@@ -8,9 +9,14 @@ from sqlalchemy import DateTime
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
 from sqlalchemy import Unicode
+from zope.interface import implements
+from zope.interface import Interface
 
+class IRDBTable(Interface):
+    pass
 
 class RDBTable(File):
+    implements(IRDBTable, IDefaultWorkflow)
     id = Column('id', Integer, ForeignKey('files.id'), primary_key=True)
     #XXX + table metadata
 
