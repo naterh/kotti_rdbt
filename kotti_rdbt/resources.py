@@ -8,6 +8,7 @@ from sqlalchemy import Column
 from sqlalchemy import DateTime
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
+from sqlalchemy import String
 from sqlalchemy import Unicode
 from zope.interface import implements
 from zope.interface import Interface
@@ -18,6 +19,7 @@ class IRDBTable(Interface):
 class RDBTable(File):
     implements(IRDBTable, IDefaultWorkflow)
     id = Column('id', Integer, ForeignKey('files.id'), primary_key=True)
+    table_name = Column(String(80))
     #XXX + table metadata
 
 
@@ -30,8 +32,9 @@ class RDBTable(File):
 
 class RDBTableColumn(Content):
     id = Column(Integer, ForeignKey('contents.id'), primary_key=True)
-    column_name = Column(Unicode(40))
-    column_type = Column(Unicode(10))
+    src_column_name = Column(Unicode(80), nullable=False)
+    dest_column_name = Column(Unicode(80), nullable=False)
+    column_type = Column(Unicode(10), nullable=False)
     column_lenght = Column(Integer)
 
 
@@ -43,9 +46,11 @@ class RDBTableColumn(Content):
         addable_to=[u'Table'],
         )
 
-    def __init__(self, column_name=None, column_type=None, column_lenght=0,
-                 in_navigation=False, **kwargs):
+    def __init__(self, src_column_name=None, dest_column_name=None,
+                    column_type=None, column_lenght=0,
+                    in_navigation=False, **kwargs):
         super(RDBTableColumn, self).__init__(in_navigation=in_navigation, **kwargs)
-        self.column_name = column_name
+        self.src_column_name = src_column_name
+        self.dest_column_name = dest_column_name
         self.column_type = column_type
         self.column_lenght = column_lenght
