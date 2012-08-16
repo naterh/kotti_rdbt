@@ -20,7 +20,7 @@ class RDBTable(File):
     implements(IRDBTable, IDefaultWorkflow)
     id = Column('id', Integer, ForeignKey('files.id'), primary_key=True)
     table_name = Column(String(80), nullable=False)
-    #XXX + table metadata
+    #XXX + more table metadata
 
 
     type_info = Content.type_info.copy(

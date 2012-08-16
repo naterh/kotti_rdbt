@@ -11,6 +11,29 @@
     <ul>
       <li tal:repeat="tag context.tags" tal:content="tag" />
     </ul>
+    <table>
+      <thead>
+        <tr>
+            <td> Title </td>
+            <td> Description</td>
+            <td> Source Column </td>
+            <td> Destination Column</td>
+            <td> Type </td>
+            <td> Lenght </td>
+        </tr>
+      </thead>
+      <tbody tal:define="children api.list_children()">
+        <tr tal:repeat="item children">
+            <td tal:content="item.title"> Title </td>
+            <td tal:content="item.description"> Description</td>
+            <td tal:content="item.src_column_name"> Source Column </td>
+            <td tal:content="item.dest_column_name"> Destination Column</td>
+            <td tal:content="item.column_type"> Type </td>
+            <td tal:content="item.column_lenght"> lenght </td>
+        </tr>
+      </tbody>
+    </table>
+
   </article>
 
 </html>
