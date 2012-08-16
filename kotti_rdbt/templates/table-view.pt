@@ -12,6 +12,11 @@
       <li tal:repeat="tag context.tags" tal:content="tag" />
     </ul>
     <table>
+    <caption>
+      <strong>
+        Table Columns
+      </strong>
+    </caption>
       <thead>
         <tr>
             <td> Title </td>

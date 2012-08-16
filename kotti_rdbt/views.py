@@ -22,12 +22,16 @@ class EditDBTableFormView(EditFileFormView):
         tmpstore = FileUploadTempStore(self.request)
 
         class TableFileSchema(ContentSchema):
-            file = SchemaNode(
-                FileData(),
+            file = colander.SchemaNode(
+                deform.FileData(),
                 title=_(u'File'),
-                missing=null,
+                missing=colander.null,
                 widget=deform.widget.FileUploadWidget(tmpstore),
                 #validator=validate_file_size_limit,
+                )
+            table_name = colander.SchemaNode(
+                colander.String(),
+                title=_(u"Table Name"),
                 )
         return TableFileSchema()
 
@@ -133,7 +137,7 @@ def add_column(context, request):
 def includeme_edit(config):
 
     config.add_view(
-        EditFileFormView,
+        EditDBTableFormView,
         context=RDBTable,
         name='edit',
         permission='edit',
