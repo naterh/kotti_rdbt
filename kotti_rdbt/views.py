@@ -13,6 +13,8 @@ from kotti.views.file import FileUploadTempStore
 from kotti_rdbt.resources import RDBTable
 from kotti_rdbt.resources import RDBTableColumn
 from kotti_rdbt import _
+from kotti_rdbt.utils import create_columns
+
 
 
 class EditDBTableFormView(EditFileFormView):
@@ -76,6 +78,13 @@ class AddRDBTableFormView(AddFileFormView):
             )
 
 
+def view_rdb_table(context, request):
+    if request.POST.get('create-columns') == 'extract-columns':
+        create_columns(context, request)
+    return {}
+
+
+
 
 
 
@@ -95,12 +104,15 @@ class RDBTableColumnSchema(ContentSchema):
         colander.String(),
         title=_(u"Type"),
         missing=None,
-        validator=colander.OneOf(['String', 'Integer', 'Float', ]),
+        validator=colander.OneOf(['String', 'Integer', 'Float', 'Date', 'DateTime']),
         widget = deform.widget.SelectWidget(
                 values=(('String','String (varchar)'),
                         ('Integer','Integer'),
-                        ('Float','Float'),)
-                ),
+                        ('Float','Float'),
+                        ('Date', 'Date'),
+                        ('DateTime', 'Date & Time'),
+                        ('Boolean', 'Boolean'),)
+                )
         )
     column_lenght = colander.SchemaNode(
         colander.Integer(),
@@ -154,6 +166,7 @@ def includeme_edit(config):
 def includeme_view(config):
 
     config.add_view(
+        view_rdb_table,
         context=RDBTable,
         name='view',
         permission='view',

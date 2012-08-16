@@ -24,7 +24,7 @@
       </thead>
       <tbody tal:define="children api.list_children()">
         <tr tal:repeat="item children">
-            <td tal:content="item.title"> Title </td>
+            <td> <a href="${api.url(item, '@@edit')}" tal:content="item.title"> Title </a> </td>
             <td tal:content="item.description"> Description</td>
             <td tal:content="item.src_column_name"> Source Column </td>
             <td tal:content="item.dest_column_name"> Destination Column</td>
@@ -33,7 +33,15 @@
         </tr>
       </tbody>
     </table>
-
+    <form action="${request.url}" method="post">
+        <button i18n:attributes="title"
+                  type="submit" name="create-columns" value="extract-columns"
+                  title="Extract Columns from source"
+                  id="extract-columns"
+                  class="btn">
+            Extract columns
+          </button>
+    </form>
   </article>
 
 </html>
