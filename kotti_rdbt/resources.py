@@ -19,7 +19,7 @@ class IRDBTable(Interface):
 class RDBTable(File):
     implements(IRDBTable, IDefaultWorkflow)
     id = Column('id', Integer, ForeignKey('files.id'), primary_key=True)
-    table_name = Column(String(80))
+    table_name = Column(String(80), nullable=False)
     #XXX + table metadata
 
 
@@ -29,6 +29,14 @@ class RDBTable(File):
         add_view=u'add_table',
         addable_to=[u'Document'],
         )
+
+    def __init__(self, table_name=None, **kwargs):
+        super(RDBTable, self).__init__(**kwargs)
+        self.table_name = table_name
+
+
+
+
 
 class RDBTableColumn(Content):
     id = Column(Integer, ForeignKey('contents.id'), primary_key=True)

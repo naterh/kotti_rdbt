@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      metal:use-macro="api.macro('kotti:templates/view/master.pt')">
+
+  <article metal:fill-slot="content" class="document-view content">
+    <h1>${context.title}</h1>
+    <p class="description">
+      ${context.description}
+    </p>
+    <ul>
+      <li tal:repeat="tag context.tags" tal:content="tag" />
+    </ul>
+    <table>
+        <caption><strong>Column Mapping</strong></caption>
+        <tr>
+            <td>Source </td> <td tal:content="context.src_column_name"> </td>
+        </tr>
+        <tr>
+            <td>Destination </td> <td tal:content="context.dest_column_name"> </td>
+        </tr>
+        <tr>
+            <td>Type </td> <td tal:content="context.column_type"> </td>
+        </tr>
+        <tr>
+            <td>Lenght </td> <td tal:content="context.column_lenght"> </td>
+        </tr>
+    </table>
+  </article>
+
+</html>
