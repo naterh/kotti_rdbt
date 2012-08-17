@@ -38,13 +38,37 @@
         </tr>
       </tbody>
     </table>
+    <table tal:condition="columns">
+    <caption>
+      <strong>
+        Table Contents
+      </strong>
+    </caption>
+      <thead>
+        <tr>
+            <td tal:repeat="col columns" tal:content="col"> Column Name </td>
+        </tr>
+      </thead>
+      <tbody tal:condition="values">
+        <tr tal:repeat="items values">
+            <td tal:repeat="item items" tal:content="item"> Column Value </td>
+        </tr>
+      </tbody>
+    </table>
     <form action="${request.url}" method="post">
-        <button i18n:attributes="title"
+        <button i18n:attributes="title" tal:condition="not: context.is_created"
                   type="submit" name="create-columns" value="extract-columns"
                   title="Extract Columns from source"
                   id="extract-columns"
                   class="btn">
             Extract columns
+          </button>
+          <button i18n:attributes="title" tal:condition="not: context.is_created"
+                  type="submit" name="create-table" value="create-and-populate"
+                  title="Create and populate table"
+                  id="create-table"
+                  class="btn">
+            Create Table
           </button>
     </form>
   </article>

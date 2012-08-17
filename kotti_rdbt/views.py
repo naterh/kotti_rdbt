@@ -1,6 +1,13 @@
+import re
+
 import colander
 import deform
+
+from sqlalchemy import Table
+
 from kotti import DBSession
+from kotti import metadata
+
 from kotti.views.form import ContentSchema
 from kotti.views.edit import generic_add
 from kotti.views.edit import generic_edit
@@ -13,8 +20,16 @@ from kotti.views.file import FileUploadTempStore
 from kotti_rdbt.resources import RDBTable
 from kotti_rdbt.resources import RDBTableColumn
 from kotti_rdbt import _
-from kotti_rdbt.utils import create_columns
+from kotti_rdbt.utils import create_columns, create_rdb_table, populate_rdb_table
 
+regex = r"^[a-z]+[a-z0-9_]*[a-z0-9]+$"
+check_name = re.compile(regex).match
+
+def validate_name(node, value):
+    if value is not None:
+        if check_name(value) is None:
+            msg = _('Table and column names must consist of lowercase letters, _ and numbers only')
+            raise colander.Invalid(node, msg)
 
 
 class EditDBTableFormView(EditFileFormView):
@@ -32,6 +47,7 @@ class EditDBTableFormView(EditFileFormView):
             table_name = colander.SchemaNode(
                 colander.String(),
                 title=_(u"Table Name"),
+                validator=validate_name,
                 )
         return TableFileSchema()
 
@@ -39,12 +55,15 @@ class EditDBTableFormView(EditFileFormView):
         self.context.title = appstruct['title']
         self.context.description = appstruct['description']
         self.context.tags = appstruct['tags']
-        if appstruct['file']:
-            buf = appstruct['file']['fp'].read()
-            self.context.data = buf
-            self.context.filename = appstruct['file']['filename']
-            self.context.mimetype = appstruct['file']['mimetype']
-            self.context.size = len(buf)
+        if not self.context.is_created:
+            if appstruct['table_name']:
+                self.context.table_name = appstruct['table_name']
+            if appstruct['file']:
+                buf = appstruct['file']['fp'].read()
+                self.context.data = buf
+                self.context.filename = appstruct['file']['filename']
+                self.context.mimetype = appstruct['file']['mimetype']
+                self.context.size = len(buf)
 
 
 class AddRDBTableFormView(AddFileFormView):
@@ -64,6 +83,8 @@ class AddRDBTableFormView(AddFileFormView):
             table_name = colander.SchemaNode(
                 colander.String(),
                 title=_(u"Table Name"),
+                validator=validate_name,
+                missing=None,
                 )
         return TableFileSchema()
 
@@ -85,7 +106,17 @@ class AddRDBTableFormView(AddFileFormView):
 def view_rdb_table(context, request):
     if request.POST.get('create-columns') == 'extract-columns':
         create_columns(context, request)
-    return {}
+    elif request.POST.get("create-table") == "create-and-populate":
+        create_rdb_table(context, request)
+        populate_rdb_table(context, request)
+    result = {'columns': None, 'values': []}
+    if context.is_created:
+        my_table = Table(context.table_name, metadata, autoload=True)
+        result['columns'] = my_table.columns.keys()
+        rp = my_table.select().execute()
+        for r in rp:
+            result['values'].append(r)
+    return result
 
 
 
@@ -103,6 +134,7 @@ class RDBTableColumnSchema(ContentSchema):
         colander.String(),
         title=_(u"Destination Name"),
         description = _('Column Name in the table to be created in the DB'),
+        validator=validate_name,
         )
     column_type = colander.SchemaNode(
         colander.String(),
@@ -123,11 +155,17 @@ class RDBTableColumnSchema(ContentSchema):
         title=_(u"Lenght"),
         missing=0,
         )
-
+    is_pk = colander.SchemaNode(
+        colander.Boolean(),
+        title=_(u"Primary Key"),
+        )
 
 @ensure_view_selector
 def edit_column(context, request):
-    return generic_edit(context, request, RDBTableColumnSchema())
+    if context.__parent__.is_created:
+        return generic_edit(context, request, ContentSchema())
+    else:
+        return generic_edit(context, request, RDBTableColumnSchema())
 
 
 def add_column(context, request):

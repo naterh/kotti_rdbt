@@ -20,6 +20,7 @@ setup(name='kotti_rdbt',
       install_requires=[
           # -*- Extra requirements: -*-
           'Kotti',
+          'dbf',
       ],
       entry_points="""
       # -*- Entry points: -*-
