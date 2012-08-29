@@ -45,7 +45,7 @@ class RDBTable(File):
 
 class RDBTableColumn(Content):
     id = Column(Integer, ForeignKey('contents.id'), primary_key=True)
-    src_column_name = Column(Unicode(80), nullable=False)
+    src_column_name = Column(Unicode(80))
     dest_column_name = Column(Unicode(80), nullable=False)
     column_type = Column(Unicode(10), nullable=False)
     column_lenght = Column(Integer)

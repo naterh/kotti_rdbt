@@ -22,6 +22,13 @@ from kotti_rdbt.resources import RDBTableColumn
 from kotti_rdbt import _
 from kotti_rdbt.utils import create_columns, create_rdb_table, populate_rdb_table
 
+try:
+    import geoalchemy
+    SPATIAL = True
+except:
+    SPATIAL = False
+
+
 regex = r"^[a-z]+[a-z0-9_]*[a-z0-9]+$"
 check_name = re.compile(regex).match
 
@@ -120,15 +127,27 @@ def view_rdb_table(context, request):
 
 
 
+column_type_values = [('String','String (varchar)'),
+                ('Integer','Integer'),
+                ('Float','Float'),
+                ('Date', 'Date'),
+                ('DateTime', 'Date & Time'),
+                ('Boolean', 'Boolean')]
+
+if SPATIAL:
+    column_type_values += [('Point', 'Geometry (Point)'),
+            ('LineString', 'Geometry (LineString)'),
+            ('Polygon', 'Geometry (Polygon)')]
 
 
-
+valid_column_types = [v[0] for v in column_type_values]
 
 class RDBTableColumnSchema(ContentSchema):
     src_column_name = colander.SchemaNode(
         colander.String(),
         title=_(u"Source Name"),
         description = _('Column Name in the uploaded table'),
+        missing=None,
         )
     dest_column_name = colander.SchemaNode(
         colander.String(),
@@ -140,14 +159,9 @@ class RDBTableColumnSchema(ContentSchema):
         colander.String(),
         title=_(u"Type"),
         missing=None,
-        validator=colander.OneOf(['String', 'Integer', 'Float', 'Date', 'DateTime']),
+        validator=colander.OneOf(valid_column_types),
         widget = deform.widget.SelectWidget(
-                values=(('String','String (varchar)'),
-                        ('Integer','Integer'),
-                        ('Float','Float'),
-                        ('Date', 'Date'),
-                        ('DateTime', 'Date & Time'),
-                        ('Boolean', 'Boolean'),)
+                values=tuple(column_type_values)
                 )
         )
     column_lenght = colander.SchemaNode(
