@@ -26,6 +26,7 @@ from kotti_rdbt.resources import RDBTableColumn
 try:
     from geo_ko.utils import extract_geometry_info
     from geo_ko.utils import define_geo_column
+    from geoalchemy import GeometryDDL
     SPATIAL = True
 except:
     SPATIAL = False
@@ -164,7 +165,7 @@ def create_rdb_table(context, request):
     for col in context.children:
         if col.type == 'rdb_table_column':
             column = define_column(col)
-            if column:
+            if column is not None:
                 columns.append(column)
                 if col.column_type in ['Point', 'LineString', 'Polygon']:
                     is_spatial = True
