@@ -25,7 +25,7 @@ from kotti_rdbt.resources import RDBTableColumn
 
 try:
     from geo_ko.utils import extract_geometry_info
-    from geo_ko.utils import define_geo_column
+    from geo_ko.utils import define_geo_column, populate_geo_table
     from geoalchemy import GeometryDDL
     SPATIAL = True
 except:
@@ -159,7 +159,7 @@ def define_column(col):
     else:
         raise TypeError('Unsupported Type %s' % col.column_type)
 
-def create_rdb_table(context, request):
+def define_table_columnns(context):
     columns = []
     is_spatial = False
     for col in context.children:
@@ -169,6 +169,12 @@ def create_rdb_table(context, request):
                 columns.append(column)
                 if col.column_type in ['Point', 'LineString', 'Polygon']:
                     is_spatial = True
+    return columns, is_spatial
+
+
+def create_rdb_table(context, request):
+
+    columns, is_spatial = define_table_columnns(context)
     if columns:
         new_table = Table(context.table_name, metadata,
                     *columns)
@@ -178,7 +184,9 @@ def create_rdb_table(context, request):
             # column when new_table.create or metadata.create_all is
             # called.
             GeometryDDL(new_table)
-        metadata.create_all(engine) # create the table
+        # create the table
+        #metadata.create_all(engine)
+        new_table.create(engine)
         context.is_created = True
         request.session.flash(u'Table created')
     else:
@@ -209,5 +217,9 @@ def populate_rdb_table(context, request):
             table.insert().values(**insert).execute()
         dbt.close()
         tmp.close()
+    elif context.mimetype in ['application/zip',
+                            'application/x-zip-compressed'] and SPATIAL:
+        populate_geo_table(table, context.data, mapping)
+
 
 

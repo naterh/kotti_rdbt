@@ -4,6 +4,7 @@ import colander
 import deform
 
 from sqlalchemy import Table
+from sqlalchemy.exc import NoSuchTableError, InvalidRequestError
 
 from kotti import DBSession
 from kotti import metadata
@@ -20,7 +21,8 @@ from kotti.views.file import FileUploadTempStore
 from kotti_rdbt.resources import RDBTable
 from kotti_rdbt.resources import RDBTableColumn
 from kotti_rdbt import _
-from kotti_rdbt.utils import create_columns, create_rdb_table, populate_rdb_table
+from kotti_rdbt.utils import create_columns, create_rdb_table
+from kotti_rdbt.utils import populate_rdb_table, define_table_columnns
 
 try:
     import geoalchemy
@@ -118,11 +120,27 @@ def view_rdb_table(context, request):
         populate_rdb_table(context, request)
     result = {'columns': None, 'values': []}
     if context.is_created:
-        my_table = Table(context.table_name, metadata, autoload=True)
-        result['columns'] = my_table.columns.keys()
-        rp = my_table.select().execute()
-        for r in rp:
-            result['values'].append(r)
+        try:
+            columns, is_spatial = define_table_columnns(context)
+            try:
+                my_table = Table(context.table_name, metadata,
+                    *columns,  autoload=True)
+            except InvalidRequestError:
+                my_table = Table(context.table_name, metadata, autoload=True)
+            result['columns'] = my_table.columns.keys()
+            rp = my_table.select().execute()
+            import ipdb; ipdb.set_trace()
+            for r in rp:
+                values = []
+                for v in r:
+                    try:
+                        values.append(str(v))
+                    except UnicodeDecodeError:
+                        values.append('')
+                result['values'].append(values)
+        except NoSuchTableError:
+            context.is_created = False
+            request.session.flash(u'Table not found, marked as not created')
     return result
 
 
