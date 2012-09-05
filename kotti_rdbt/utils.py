@@ -23,13 +23,12 @@ from kotti.util import title_to_name
 
 from kotti_rdbt.resources import RDBTableColumn
 
-try:
-    from geo_ko.utils import extract_geometry_info
-    from geo_ko.utils import define_geo_column, populate_geo_table
-    from geoalchemy import GeometryDDL
-    SPATIAL = True
-except:
-    SPATIAL = False
+#try:
+from geo_ko.utils import extract_geometry_info
+from geo_ko.utils import define_geo_column, populate_geo_table
+SPATIAL = True
+#except:
+#    SPATIAL = False
 
 
 
@@ -183,7 +182,8 @@ def create_rdb_table(context, request):
             # For SQLAlchemy/GeoAlchemy to be able to create the geometry
             # column when new_table.create or metadata.create_all is
             # called.
-            GeometryDDL(new_table)
+            #GeometryDDL(new_table)
+            pass
         # create the table
         #metadata.create_all(engine)
         new_table.create(engine)

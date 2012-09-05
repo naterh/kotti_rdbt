@@ -1,10 +1,24 @@
 import re
 
+try:
+    import simplejson as json
+except ImportError:
+    import json
+
 import colander
 import deform
 
 from sqlalchemy import Table
+# Column Types
+from sqlalchemy import Boolean
+from sqlalchemy import Date
+from sqlalchemy import DateTime
+from sqlalchemy import Integer
+from sqlalchemy import Unicode
+
 from sqlalchemy.exc import NoSuchTableError, InvalidRequestError
+
+from pyramid.response import Response
 
 from kotti import DBSession
 from kotti import metadata
@@ -24,11 +38,11 @@ from kotti_rdbt import _
 from kotti_rdbt.utils import create_columns, create_rdb_table
 from kotti_rdbt.utils import populate_rdb_table, define_table_columnns
 
-try:
-    import geoalchemy
-    SPATIAL = True
-except:
-    SPATIAL = False
+#try:
+import geoalchemy2
+SPATIAL = True
+#except:
+#    SPATIAL = False
 
 
 regex = r"^[a-z]+[a-z0-9_]*[a-z0-9]+$"
@@ -118,7 +132,7 @@ def view_rdb_table(context, request):
     elif request.POST.get("create-table") == "create-and-populate":
         create_rdb_table(context, request)
         populate_rdb_table(context, request)
-    result = {'columns': None, 'values': []}
+    result = {'columns': [], 'values': []}
     if context.is_created:
         try:
             columns, is_spatial = define_table_columnns(context)
@@ -127,21 +141,58 @@ def view_rdb_table(context, request):
                     *columns,  autoload=True)
             except InvalidRequestError:
                 my_table = Table(context.table_name, metadata, autoload=True)
-            result['columns'] = my_table.columns.keys()
-            rp = my_table.select().execute()
-            import ipdb; ipdb.set_trace()
-            for r in rp:
+            for item in my_table.columns.items():
+                if type(item[1].type) in [Boolean, Date,
+                                    DateTime, Integer, Unicode]:
+                    result['columns'].append(item[0])
+            rp = my_table.select(limit=10).execute()
+            for row in rp:
                 values = []
-                for v in r:
-                    try:
-                        values.append(str(v))
-                    except UnicodeDecodeError:
-                        values.append('')
+                for c in result['columns']:
+                    values.append(row[c])
                 result['values'].append(values)
         except NoSuchTableError:
             context.is_created = False
             request.session.flash(u'Table not found, marked as not created')
     return result
+
+
+
+def view_rdbtable_json(context, request):
+    #json_result= {"page":form.get('page', '1') ,
+    #              "total":len(results),
+    #              "rows":[]}
+    result={ 'rows':[]}
+    columns =[]
+    try:
+        columns, is_spatial = define_table_columnns(context)
+        try:
+            my_table = Table(context.table_name, metadata,
+                *columns,  autoload=True)
+        except InvalidRequestError:
+            my_table = Table(context.table_name, metadata, autoload=True)
+        cols =[]
+        for item in my_table.columns.items():
+            if type(item[1].type) in [Boolean, Date,
+                                DateTime, Integer, Unicode]:
+                cols.append(item[0])
+        rp = my_table.select().execute()
+        pk = my_table.primary_key
+        for row in rp:
+            cell = []
+            ids = []
+            for c in cols:
+                cell.append(row[c])
+            for c in pk.columns.keys():
+                 ids.append(row[c])
+            id = ':'.join(str(ids))
+            result['rows'].append(
+                {"id":id,"cell":cell})
+        return Response(json.dumps(result))
+    except NoSuchTableError:
+        return Response('[]')
+
+
 
 
 
@@ -253,6 +304,14 @@ def includeme_view(config):
         name='view',
         permission='view',
         renderer='templates/column-view.pt',
+        )
+
+
+    config.add_view(
+        view_rdbtable_json,
+        context=RDBTable,
+        name='json',
+        permission='view',
         )
 
 
