@@ -178,12 +178,6 @@ def create_rdb_table(context, request):
         new_table = Table(context.table_name, metadata,
                     *columns)
         engine = DBSession.connection().engine
-        if SPATIAL and is_spatial:
-            # For SQLAlchemy/GeoAlchemy to be able to create the geometry
-            # column when new_table.create or metadata.create_all is
-            # called.
-            #GeometryDDL(new_table)
-            pass
         # create the table
         #metadata.create_all(engine)
         new_table.create(engine)
@@ -202,7 +196,9 @@ def populate_rdb_table(context, request):
     for col in context.children:
         if col.type == 'rdb_table_column':
             if col.src_column_name:
-                mapping[col.dest_column_name] = col.src_column_name
+                mapping[col.dest_column_name] = {'name': col.src_column_name,
+                                                'type': col.column_type,
+                                                'length': col.column_lenght}
     if context.mimetype == 'application/x-dbf':
         tmp = tempfile.NamedTemporaryFile(suffix='.dbf')
         tmp.file.write(context.data)
@@ -212,8 +208,7 @@ def populate_rdb_table(context, request):
         for record in dbt:
             insert = {}
             for dest, src in mapping.iteritems():
-                insert[dest] = record[src]
-            print insert
+                insert[dest] = record[src['name']]
             table.insert().values(**insert).execute()
         dbt.close()
         tmp.close()

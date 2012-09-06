@@ -159,10 +159,11 @@ def view_rdb_table(context, request):
 
 
 def view_rdbtable_json(context, request):
-    #json_result= {"page":form.get('page', '1') ,
-    #              "total":len(results),
-    #              "rows":[]}
-    result={ 'rows':[]}
+    form = request.params
+    limit = int(form.get('rp', 15))
+    page = int(form.get('page', 1))
+    start = max(0, (page - 1) * limit)
+    result={'page': page, 'rows':[]}
     columns =[]
     try:
         columns, is_spatial = define_table_columnns(context)
@@ -171,13 +172,17 @@ def view_rdbtable_json(context, request):
                 *columns,  autoload=True)
         except InvalidRequestError:
             my_table = Table(context.table_name, metadata, autoload=True)
+        tablen = my_table.count().execute()
+        result['total'] = tablen.fetchone()[0]
         cols =[]
         for item in my_table.columns.items():
             if type(item[1].type) in [Boolean, Date,
                                 DateTime, Integer, Unicode]:
                 cols.append(item[0])
-        rp = my_table.select().execute()
+        result['columns'] = cols
         pk = my_table.primary_key
+        result['primary_key'] = pk.columns.keys()
+        rp = my_table.select(offset=start, limit=limit).execute()
         for row in rp:
             cell = []
             ids = []
@@ -185,9 +190,9 @@ def view_rdbtable_json(context, request):
                 cell.append(row[c])
             for c in pk.columns.keys():
                  ids.append(row[c])
-            id = ':'.join(str(ids))
+            #id = ':'.join(str(ids))
             result['rows'].append(
-                {"id":id,"cell":cell})
+                {"id":ids,"cell":cell})
         return Response(json.dumps(result))
     except NoSuchTableError:
         return Response('[]')
