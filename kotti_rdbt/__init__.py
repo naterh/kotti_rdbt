@@ -1,4 +1,4 @@
-#
+# -*- coding: utf-8 -*-
 from pyramid.i18n import TranslationStringFactory
 
 _ = TranslationStringFactory('kotti_rdbt')

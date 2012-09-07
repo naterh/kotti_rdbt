@@ -24,5 +24,7 @@ setup(name='kotti_rdbt',
       ],
       entry_points="""
       # -*- Entry points: -*-
+      [fanstatic.libraries]
+        kotti_rdbt = kotti_rdbt.static:lib
       """,
       )

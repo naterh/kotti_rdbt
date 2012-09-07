@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import re
 
 try:
@@ -7,7 +8,7 @@ except ImportError:
 
 import colander
 import deform
-
+from sqlalchemy import asc, desc
 from sqlalchemy import Table
 # Column Types
 from sqlalchemy import Boolean
@@ -37,7 +38,7 @@ from kotti_rdbt.resources import RDBTableColumn
 from kotti_rdbt import _
 from kotti_rdbt.utils import create_columns, create_rdb_table
 from kotti_rdbt.utils import populate_rdb_table, define_table_columnns
-
+from kotti_rdbt.static import kotti_rdbt_resources
 #try:
 import geoalchemy2
 SPATIAL = True
@@ -127,12 +128,39 @@ class AddRDBTableFormView(AddFileFormView):
 
 
 def view_rdb_table(context, request):
+    js_template = """
+    $("#flexitable").flexigrid(
+            {
+            url: '%(url)s',
+            dataType: 'json',
+            colModel : [
+                %(col_model)s
+                ],
+            searchitems : [
+                %(search)s
+                ],
+            usepager: true,
+            title: '%(title)s',
+            useRp: true,
+            rp: 20,
+            showTableToggleBtn: true,
+            width: 700,
+            height: 200
+            }
+        );
+        """
+    col_t = "{display: '%s', name : '%s', width : %i, sortable : %s, align: 'left', hide: false}"
+    search_t = "{display: '%s', name : '%s'}"
+    tl = []
+    ts = []
+    kotti_rdbt_resources.need()
     if request.POST.get('create-columns') == 'extract-columns':
         create_columns(context, request)
     elif request.POST.get("create-table") == "create-and-populate":
         create_rdb_table(context, request)
         populate_rdb_table(context, request)
-    result = {'columns': [], 'values': []}
+    result = {'columns': [], 'values': [], 'js':'/*--*/'}
+    url = request.resource_url(context)
     if context.is_created:
         try:
             columns, is_spatial = define_table_columnns(context)
@@ -145,6 +173,15 @@ def view_rdb_table(context, request):
                 if type(item[1].type) in [Boolean, Date,
                                     DateTime, Integer, Unicode]:
                     result['columns'].append(item[0])
+                    tl.append( col_t %(item[0], item[0], 80, 'true'))
+                    ts.append( search_t %(item[0], item[0]))
+            js = js_template % {
+                'url':url +'@@json',
+                'col_model': ',\n'.join(tl),
+                'search': ',\n'.join(ts),
+                'title': context.table_name,
+            }
+            result['js'] = js
             rp = my_table.select(limit=10).execute()
             for row in rp:
                 values = []
@@ -163,6 +200,12 @@ def view_rdbtable_json(context, request):
     limit = int(form.get('rp', 15))
     page = int(form.get('page', 1))
     start = max(0, (page - 1) * limit)
+    sortorder = form.get('sortorder',None)
+    sortname = form.get('sortname',None)
+    sort = None
+    searchfor = form.get('query',None)
+    searchcol = form.get('qtype',None)
+    search = None
     result={'page': page, 'rows':[]}
     columns =[]
     try:
@@ -182,7 +225,17 @@ def view_rdbtable_json(context, request):
         result['columns'] = cols
         pk = my_table.primary_key
         result['primary_key'] = pk.columns.keys()
-        rp = my_table.select(offset=start, limit=limit).execute()
+        if sortname:
+            if my_table.columns.get(sortname) is not None:
+                if sortorder == 'desc':
+                    sort = desc(my_table.columns.get(sortname))
+                else:
+                    sort = asc(my_table.columns.get(sortname))
+        if searchcol and searchfor:
+            if my_table.columns.get(searchcol) is not None:
+                search = my_table.columns.get(searchcol) == searchfor
+        query = my_table.select(whereclause=search, offset=start, limit=limit, order_by=sort)
+        rp = query.execute()
         for row in rp:
             cell = []
             ids = []

@@ -38,7 +38,9 @@
         </tr>
       </tbody>
     </table>
-    <table tal:condition="columns">
+    <table id="flexitable0" style="display:none">
+    </table>
+    <table id="flexitable" tal:condition="columns">
     <caption>
       <strong>
         Table Contents
@@ -55,6 +57,11 @@
         </tr>
       </tbody>
     </table>
+    <script>
+    /*<![CDATA[*/
+        ${js}
+    /*]]>*/
+    </script>
     <form action="${request.url}" method="post">
         <button i18n:attributes="title" tal:condition="not: context.is_created"
                   type="submit" name="create-columns" value="extract-columns"

@@ -13,6 +13,7 @@ from sqlalchemy import Boolean
 from sqlalchemy import Date
 from sqlalchemy import DateTime
 from sqlalchemy import Integer
+# -*- coding: utf-8 -*-
 from sqlalchemy import Unicode
 
 from kotti import DBSession
