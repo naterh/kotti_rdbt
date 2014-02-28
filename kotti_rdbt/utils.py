@@ -24,12 +24,12 @@ from kotti.util import title_to_name
 
 from kotti_rdbt.resources import RDBTableColumn
 
-#try:
-from geo_ko.utils import extract_geometry_info
-from geo_ko.utils import define_geo_column, populate_geo_table
-SPATIAL = True
-#except:
-#    SPATIAL = False
+try:
+    from geo_ko.utils import extract_geometry_info
+    from geo_ko.utils import define_geo_column, populate_geo_table
+    SPATIAL = True
+except:
+    SPATIAL = False
 
 
 

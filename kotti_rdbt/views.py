@@ -24,14 +24,14 @@ from pyramid.response import Response
 from kotti import DBSession
 from kotti import metadata
 
-from kotti.views.form import ContentSchema
+from kotti.views.edit.content import ContentSchema
 from kotti.views.edit import generic_add
 from kotti.views.edit import generic_edit
 from kotti.views.view import view_node
 from kotti.views.util import ensure_view_selector
 from kotti.views.file import EditFileFormView
 from kotti.views.file import AddFileFormView
-from kotti.views.file import FileUploadTempStore
+from kotti.views.form import FileUploadTempStore
 
 from kotti_rdbt.resources import RDBTable
 from kotti_rdbt.resources import RDBTableColumn
